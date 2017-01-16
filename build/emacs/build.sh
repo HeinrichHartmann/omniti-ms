@@ -40,12 +40,36 @@ LDFLAGS64="$LDFLAGS64 -L/usr/gnu/lib/$ISAPART64 -R/usr/gnu/lib/$ISAPART64"
 BUILD_DEPENDS_IPS="library/ncurses system/library/gcc-4-runtime"
 DEPENDS_IPS="library/ncurses system/library/gcc-4-runtime"
 
-CONFIGURE_OPTS="--with-gif=no --without-x"
+CONFIGURE_OPTS="--with-gif=no --without-x --without-makeinfo"
+
+REPOS=git://git.savannah.gnu.org/emacs
+GIT=/usr/bin/git
+TAG=emacs-24.5
+
+download_git() {
+    pushd $TMPDIR > /dev/null
+    logmsg "Checking for source directory"
+    if [ ! -d $BUILDDIR ]; then
+	logmsg "Checking code out from git repo"
+	logcmd $GIT clone $REPOS.git $BUILDDIR || \
+            logerr "--- failed to clone source"
+	cd $BUILDDIR
+    else
+	logmsg "Wiping existing git repo"
+	cd $BUILDDIR
+	git clean -f
+    fi
+    if [ -n "$TAG" ]; then
+        git checkout $TAG
+    fi
+    popd > /dev/null
+}
 
 init
-download_source $PROG $PROG $VER
+download_git
 patch_source
 prep_build
+run_autogen
 build
 make_isa_stub
 make_package
